@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ばっちり九九マスター</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-family-main: 'M PLUS Rounded 1c', sans-serif;
+            --font-family-gothic: 'MS Gothic', 'MS PGothic', 'Yu Gothic', 'Meiryo', monospace;
+            
+            --color-current: #000000;
+            --color-adjacent: #cbd5e1;
+            --color-yomigana: #e53e3e; /* 赤色 */
+            
+            --bg-stage: #ffffff;
+            
+            /* Button styles */
+            --btn-bg: #ffffff;
+            --btn-border: #a0aec0;
+            --btn-text: #4a5568;
+            
+            --btn-selected-bg: #718096;
+            --btn-selected-border: #718096;
+            --btn-selected-text: #ffffff;
+            
+            /* Start Button (Blue theme) */
+            --btn-start-bg: #e6f4ff;
+            --btn-start-border: #0091ff;
+            --btn-start-text: #0080ff;
+
+            /* Standard responsive button height token */
+            --btn-height: clamp(42px, 7.5vh, 80px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+        }
+
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            font-family: var(--font-family-main);
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .viewport-wrapper {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .stage-16-9 {
+            position: relative;
+            width: min(100vw, calc(100vh * 16 / 9));
+            height: min(100vh, calc(100vw * 9 / 16));
+            aspect-ratio: 16 / 9;
+            background-color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* スマートフォン・縦画面・小画面用のレスポンシブ微調整 */
+        @media (max-aspect-ratio: 1/1), (max-width: 768px) {
+            .stage-16-9 {
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                aspect-ratio: auto;
+                justify-content: space-between;
+                padding: 12px 8px;
+            }
+
+            .app-title {
+                position: relative;
+                top: 0;
+                right: 0;
+                text-align: center;
+                font-size: clamp(1.1rem, 4.5vw, 1.6rem);
+                margin-top: 4px;
+            }
+
+            #selection-screen {
+                padding: 10px 12px 16px;
+                justify-content: space-between;
+            }
+
+            .app-card {
+                gap: clamp(12px, 2.5vh, 24px);
+                margin-top: 0;
+            }
+
+            .dan-selection-row {
+                flex-wrap: nowrap;
+                gap: clamp(2px, 1vw, 8px);
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .square-btn {
+                width: clamp(28px, 8.5vw, 52px);
+                height: clamp(38px, 6vh, 56px);
+                font-size: clamp(0.85rem, 3.5vw, 1.2rem);
+                border-radius: 8px;
+            }
+
+            .select-btn-wide {
+                min-width: clamp(72px, 25vw, 120px);
+                height: clamp(38px, 5.5vh, 52px);
+                font-size: clamp(0.78rem, 3.2vw, 1rem);
+                border-radius: 8px;
+                padding: 0 6px;
+            }
+
+            #go-to-door-btn {
+                min-width: clamp(140px, 50vw, 220px);
+                height: clamp(42px, 6vh, 54px);
+                font-size: clamp(1rem, 4vw, 1.2rem);
+                margin-top: 0;
+            }
+
+            .settings-meter-container {
+                position: relative;
+                bottom: 0;
+                right: 0;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+                gap: 12px;
+                margin-top: 8px;
+            }
+
+            .custom-slider, .question-count-slider, .speed-slider {
+                width: clamp(110px, 36vw, 180px);
+            }
+
+            .formula {
+                font-size: clamp(3.2rem, 14vw, 7.5rem) !important;
+            }
+
+            .yomigana {
+                font-size: clamp(1.2rem, 5.5vw, 2.4rem) !important;
+                bottom: calc(50% + clamp(2.8rem, 10vh, 5.5rem)) !important;
+            }
+
+            .ui-square-btn, .ui-square-btn-primary {
+                width: clamp(44px, 11vw, 58px);
+                height: clamp(44px, 11vw, 58px);
+                font-size: clamp(0.6rem, 2.4vw, 0.75rem);
+            }
+
+            .top-button-container {
+                top: 12px;
+                right: 12px;
+                gap: 6px;
+            }
+
+            .progress-badge {
+                top: 12px;
+                left: 12px;
+            }
+        }
+
+        .hidden { display: none !important; }
+
+        /* タイトル表示（画面右上） */
+        .app-title {
+            position: absolute;
+            top: 3vh;
+            right: 4vw;
+            font-size: clamp(1.1rem, 2.8vh, 2rem);
+            font-weight: 700;
+            color: #2d3748;
+            letter-spacing: 0.05em;
+            z-index: 10;
+        }
+
+        #selection-screen {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 5vh 4vw 3vh;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .app-card {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: calc(var(--btn-height) * 1.2);
+            margin-top: 1vh;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(8px, 1.5vw, 18px);
+            width: 100%;
+        }
+
+        /* 面取り正方形ボタン */
+        .square-btn {
+            width: var(--btn-height);
+            height: var(--btn-height);
+            font-size: calc(var(--btn-height) * 0.42);
+            font-family: var(--font-family-main);
+            font-weight: 600;
+            border-radius: calc(var(--btn-height) * 0.22);
+            cursor: pointer;
+            border: 2px solid var(--btn-border);
+            color: var(--btn-text);
+            background-color: var(--btn-bg);
+            transition: all 0.15s ease;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .select-btn-wide {
+            min-width: calc(var(--btn-height) * 2.1);
+            height: var(--btn-height);
+            font-size: calc(var(--btn-height) * 0.36);
+            font-family: var(--font-family-main);
+            font-weight: 600;
+            border-radius: calc(var(--btn-height) * 0.22);
+            cursor: pointer;
+            border: 2px solid var(--btn-border);
+            color: var(--btn-text);
+            background-color: var(--btn-bg);
+            transition: all 0.15s ease;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 12px;
+        }
+
+        .square-btn:hover:not(.disabled), .select-btn-wide:hover:not(.disabled) {
+            border-color: #4a5568;
+        }
+
+        .square-btn.selected, .select-btn-wide.selected {
+            background-color: var(--btn-selected-bg);
+            color: var(--btn-selected-text);
+            border-color: var(--btn-selected-border);
+        }
+
+        .square-btn.disabled, .select-btn-wide.disabled {
+            background-color: #f7fafc;
+            color: #cbd5e1;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 段選択 10個横並び */
+        .dan-selection-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(4px, 1vw, 12px);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* スタートボタン (青枠・水色・青文字) */
+        #go-to-door-btn {
+            min-width: calc(var(--btn-height) * 2.6);
+            height: var(--btn-height);
+            padding: 0 24px;
+            font-size: calc(var(--btn-height) * 0.4);
+            font-family: var(--font-family-main);
+            font-weight: 700;
+            border-radius: calc(var(--btn-height) * 0.22);
+            cursor: pointer;
+            border: 2px solid var(--btn-start-border);
+            color: var(--btn-start-text);
+            background-color: var(--btn-start-bg);
+            transition: all 0.15s ease;
+        }
+
+        #go-to-door-btn:hover:not(:disabled) {
+            opacity: 0.85;
+        }
+
+        #go-to-door-btn:disabled {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* 右下に配置する問題数・速さスライダー */
+        .settings-meter-container {
+            position: absolute;
+            bottom: 3vh;
+            right: 4vw;
+            display: flex;
+            align-items: center;
+            gap: 2vw;
+            color: #718096;
+            font-size: clamp(0.75rem, 1.8vh, 1rem);
+            font-weight: 500;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .custom-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: clamp(140px, 18vw, 240px);
+            height: 5px;
+            background: #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .question-count-slider, .speed-slider {
+            width: clamp(140px, 18vw, 240px);
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #718096;
+            cursor: pointer;
+        }
+
+        /* 扉ページ (カバー画面) */
+        #door-screen {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 5vh 4vw;
+            box-sizing: border-box;
+            text-align: center;
+            gap: 2vh;
+            background-color: #ffffff;
+        }
+
+        .door-info-box {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5vh;
+            font-family: var(--font-family-main);
+            color: #2d3748;
+        }
+
+        /* 扉ページのカウントダウン「・・・」 */
+        .door-dots {
+            font-size: clamp(1.8rem, 4.5vh, 3.2rem);
+            font-weight: 700;
+            color: #2d3748;
+            height: 1.2em;
+            letter-spacing: 0.3em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .door-dans-title, .door-mode-title, .door-sub-title {
+            font-size: clamp(1.5rem, 4vh, 2.8rem);
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        /* 練習画面 UI */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            cursor: pointer;
+            background-color: #ffffff;
+        }
+
+        .app-container:focus { outline: none; }
+
+        .display-area {
+            position: relative;
+            width: 100%;
+            height: 65vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .multiplication-item {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.38s ease;
+            backface-visibility: hidden;
+            font-family: var(--font-family-gothic);
+        }
+
+        .multiplication-item.current {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            color: var(--color-current);
+            z-index: 10;
+        }
+
+        .multiplication-item.next {
+            opacity: 0.25;
+            transform: translateY(180%) scale(0.65);
+            color: var(--color-adjacent);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* 読み方 */
+        .yomigana {
+            position: absolute;
+            bottom: calc(50% + clamp(6.5rem, 22vh, 12rem));
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0.5em;
+            color: var(--color-yomigana);
+            font-size: clamp(1.8rem, 6.5vh, 3.8rem);
+            font-family: var(--font-family-gothic);
+            font-weight: 700;
+            height: 1.4em;
+            white-space: nowrap;
+            transition: opacity 0.25s ease;
+        }
+
+        .yomigana.hidden { opacity: 0; }
+
+        /* 式：読み方の有無に関わらず常に画面中央に配置、字間を半分に詰める */
+        .formula {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.05em;
+            letter-spacing: -0.04em;
+            font-size: clamp(5rem, 22vh, 11rem);
+            font-weight: 900;
+            white-space: nowrap;
+            max-width: 98vw;
+        }
+
+        /* はてな九九・穴あき九九の答えグレー枠 */
+        .answer-box {
+            position: relative;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 1.1em;
+            height: 1.1em;
+            text-align: center;
+            margin: 0 0.04em;
+            vertical-align: middle;
+            border: 3px solid #718096;
+            border-radius: 10px;
+            background-color: #ffffff;
+        }
+
+        .answer-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            border-radius: 6px;
+            z-index: 2;
+            transition: all 0.2s ease;
+            opacity: 1;
+        }
+
+        .answer-cover.hidden { 
+            opacity: 0; 
+            transform: scale(0.85);
+            pointer-events: none; 
+        }
+
+        /* 読み方の穴あき・はてな */
+        .yomi-answer-box { 
+            position: relative; 
+            display: inline-flex; 
+            justify-content: center;
+            align-items: center;
+            min-width: 2em;
+            height: 1.1em;
+            text-align: center; 
+        }
+
+        .yomi-answer-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 3;
+            transition: opacity 0.2s ease;
+            opacity: 1;
+        }
+        
+        .yomi-answer-cover.hidden { opacity: 0; pointer-events: none; }
+
+        .roll-out-up { 
+            transform: translateY(-120%) scale(0.7) !important; 
+            opacity: 0 !important; 
+        }
+
+        /* 画面上部ボタン群 */
+        .top-button-container {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 問題番号表示（左上：細いフォント） */
+        .progress-badge {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            z-index: 100;
+            font-size: clamp(0.85rem, 1.8vh, 1rem);
+            font-weight: 400;
+            color: #4a5568;
+        }
+
+        /* 面取り正方形ボタン（細い文字） */
+        .ui-square-btn {
+            width: clamp(46px, 5.5vw, 60px);
+            height: clamp(46px, 5.5vw, 60px);
+            padding: 3px;
+            font-size: clamp(0.65rem, 1.3vh, 0.75rem);
+            font-weight: 400;
+            font-family: var(--font-family-main);
+            border: 1.5px solid var(--btn-border);
+            color: var(--btn-text);
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: #ffffff;
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .ui-square-btn:hover { background-color: #f7fafc; border-color: #4a5568; }
+
+        /* 青枠水色ボタン */
+        .ui-square-btn-primary {
+            width: clamp(46px, 5.5vw, 60px);
+            height: clamp(46px, 5.5vw, 60px);
+            padding: 3px;
+            font-size: clamp(0.65rem, 1.3vh, 0.75rem);
+            font-weight: 700;
+            font-family: var(--font-family-main);
+            border: 2px solid var(--btn-start-border);
+            color: var(--btn-start-text);
+            background-color: var(--btn-start-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1.2;
+            flex-shrink: 0;
+        }
+
+        .ui-square-btn-primary:hover { opacity: 0.85; }
+
+        .bottom-button-container {
+            position: absolute;
+            bottom: 18px;
+            right: 18px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 問題番号表示（左上：細いフォント） */
+        .progress-badge {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            font-size: clamp(0.9rem, 2vh, 1.1rem);
+            font-weight: 400;
+            color: #4a5568;
+        }
+
+        /* 面取り正方形ボタン（細い文字） */
+        .ui-square-btn {
+            width: clamp(52px, 6vw, 64px);
+            height: clamp(52px, 6vw, 64px);
+            padding: 4px;
+            font-size: clamp(0.7rem, 1.5vh, 0.8rem);
+            font-weight: 400;
+            font-family: var(--font-family-main);
+            border: 1.5px solid var(--btn-border);
+            color: var(--btn-text);
+            border-radius: 14px;
+            cursor: pointer;
+            background-color: #ffffff;
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1.25;
+        }
+
+        .ui-square-btn:hover { background-color: #f7fafc; border-color: #4a5568; }
+
+        /* 青枠水色ボタン */
+        .ui-square-btn-primary {
+            width: clamp(52px, 6vw, 64px);
+            height: clamp(52px, 6vw, 64px);
+            padding: 4px;
+            font-size: clamp(0.7rem, 1.5vh, 0.8rem);
+            font-weight: 700;
+            font-family: var(--font-family-main);
+            border: 2px solid var(--btn-start-border);
+            color: var(--btn-start-text);
+            background-color: var(--btn-start-bg);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1.25;
+        }
+
+        .ui-square-btn-primary:hover { opacity: 0.85; }
+
+        .bottom-button-container {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="viewport-wrapper">
+        <div class="stage-16-9">
+
+            <!-- トップページ（選択画面） -->
+            <div id="selection-screen">
+                <div class="app-title">ばっちり九九マスター</div>
+
+                <div class="app-card">
+                    <!-- 1. メインモード選択 -->
+                    <div class="control-group" id="main-mode-group">
+                        <button class="select-btn-wide selected" data-mode="tonae">となえ九九</button>
+                        <button class="select-btn-wide" data-mode="hatena">はてな九九</button>
+                        <button class="select-btn-wide" data-mode="aki">あなあき九九</button>
+                    </div>
+
+                    <!-- 2. サブオプション選択 -->
+                    <div class="control-group" id="sub-option-group">
+                        <!-- となえ・はてな用 -->
+                        <button class="select-btn-wide sub-opt-order selected" data-sub="nobori">上り</button>
+                        <button class="select-btn-wide sub-opt-order" data-sub="kudari">下り</button>
+                        <button class="select-btn-wide sub-opt-order" data-sub="random">ランダム</button>
+
+                        <!-- あなあき用 -->
+                        <button class="select-btn-wide sub-opt-aki disabled" data-sub="back">■×□＝■</button>
+                        <button class="select-btn-wide sub-opt-aki disabled" data-sub="front">□×■＝■</button>
+                    </div>
+
+                    <!-- 3. 段選択 (1〜9, 全 横並び) -->
+                    <div class="dan-selection-row">
+                        <button class="square-btn dan-select-btn" data-dan="1">1</button>
+                        <button class="square-btn dan-select-btn" data-dan="2">2</button>
+                        <button class="square-btn dan-select-btn" data-dan="3">3</button>
+                        <button class="square-btn dan-select-btn" data-dan="4">4</button>
+                        <button class="square-btn dan-select-btn" data-dan="5">5</button>
+                        <button class="square-btn dan-select-btn" data-dan="6">6</button>
+                        <button class="square-btn dan-select-btn" data-dan="7">7</button>
+                        <button class="square-btn dan-select-btn" data-dan="8">8</button>
+                        <button class="square-btn dan-select-btn" data-dan="9">9</button>
+                        <button class="square-btn" id="all-dan-btn">全</button>
+                    </div>
+
+                    <!-- スタートボタン (青枠水色) -->
+                    <button id="go-to-door-btn" disabled>スタート</button>
+                </div>
+
+                <!-- 右下に配置する問題数・速さスライダー（はやさ左、問題数右） -->
+                <div class="settings-meter-container">
+                    <div class="slider-group">
+                        <label for="top-speed-slider">はやさ: <span class="speed-val">0</span></label>
+                        <input type="range" id="top-speed-slider" min="-8" max="2" value="0" step="0.5" class="custom-slider speed-slider">
+                    </div>
+                    <div class="slider-group">
+                        <label for="top-question-count-slider">もんだいすう: <span class="question-count-val">9</span>もん</label>
+                        <input type="range" id="top-question-count-slider" min="1" max="81" value="9" step="1" class="custom-slider question-count-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 扉ページ (カバー画面) -->
+            <div id="door-screen" class="hidden">
+                <!-- 練習ページと同じ3つのボタンを配置 -->
+                <div class="top-button-container">
+                    <button class="ui-square-btn door-back-btn">えらび<br>なおす</button>
+                    <button class="ui-square-btn toggle-yomigana-btn">よみかた<br>をだす</button>
+                    <button class="ui-square-btn toggle-animation-btn">アニメー<br>ション<br>OFF</button>
+                </div>
+
+                <div class="door-info-box">
+                    <div class="door-dans-title" id="door-dans-text">1の だん</div>
+                    <div class="door-mode-title" id="door-mode-text">となえ九九</div>
+                    <div class="door-sub-title" id="door-sub-text">上り</div>
+                    <div class="door-dots" id="door-dots-text">&nbsp;</div>
+                </div>
+
+                <div class="bottom-button-container">
+                    <button id="door-start-auto-btn" class="ui-square-btn-primary">自動で<br>おくる</button>
+                    <button id="door-start-manual-btn" class="ui-square-btn">手動で<br>おくる</button>
+                </div>
+            </div>
+
+            <!-- 練習画面 -->
+            <div class="app-container hidden" id="quiz-screen" tabindex="-1">
+                <div class="progress-badge" id="progress-badge">1 / 9</div>
+
+                <div class="top-button-container">
+                    <button id="back-to-select-btn" class="ui-square-btn door-back-btn">えらび<br>なおす</button>
+                    <button class="ui-square-btn toggle-yomigana-btn">よみかた<br>をだす</button>
+                    <button class="ui-square-btn toggle-animation-btn">アニメー<br>ション<br>OFF</button>
+                </div>
+
+                <div id="display-area" class="display-area"></div>
+
+                <!-- 右下に配置された「速さメーター」と「やめる」ボタン -->
+                <div class="settings-meter-container">
+                    <div class="slider-group">
+                        <label for="quiz-speed-slider">はやさ: <span class="speed-val">0</span></label>
+                        <input type="range" id="quiz-speed-slider" min="-8" max="2" value="0" step="0.5" class="custom-slider speed-slider">
+                    </div>
+                    <button id="quiz-stop-btn" class="ui-square-btn">やめる</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 九九基本データ
+        const allMultiplicationData = {
+            1: [{ n1: 1, n2: 1, result: 1, yomi: ['いん', 'いち', 'が', 'いち'] }, { n1: 1, n2: 2, result: 2, yomi: ['いん', 'に', 'が', 'に'] }, { n1: 1, n2: 3, result: 3, yomi: ['いん', 'さん', 'が', 'さん'] }, { n1: 1, n2: 4, result: 4, yomi: ['いん', 'し', 'が', 'し'] }, { n1: 1, n2: 5, result: 5, yomi: ['いん', 'ご', 'が', 'ご'] }, { n1: 1, n2: 6, result: 6, yomi: ['いん', 'ろく', 'が', 'ろく'] }, { n1: 1, n2: 7, result: 7, yomi: ['いん', 'しち', 'が', 'しち'] }, { n1: 1, n2: 8, result: 8, yomi: ['いん', 'はち', 'が', 'はち'] }, { n1: 1, n2: 9, result: 9, yomi: ['いん', 'く', 'が', 'く'] }],
+            2: [{ n1: 2, n2: 1, result: 2, yomi: ['に', 'いち', 'が', 'に'] }, { n1: 2, n2: 2, result: 4, yomi: ['に', 'にん', 'が', 'し'] }, { n1: 2, n2: 3, result: 6, yomi: ['に', 'さん', 'が', 'ろく'] }, { n1: 2, n2: 4, result: 8, yomi: ['に', 'し', 'が', 'はち'] }, { n1: 2, n2: 5, result: 10, yomi: ['に', 'ご', '', 'じゅう'] }, { n1: 2, n2: 6, result: 12, yomi: ['に', 'ろく', '', 'じゅうに'] }, { n1: 2, n2: 7, result: 14, yomi: ['に', 'しち', '', 'じゅうし'] }, { n1: 2, n2: 8, result: 16, yomi: ['に', 'はち', '', 'じゅうろく'] }, { n1: 2, n2: 9, result: 18, yomi: ['に', 'く', '', 'じゅうはち'] }],
+            3: [{ n1: 3, n2: 1, result: 3, yomi: ['さん', 'いち', 'が', 'さん'] }, { n1: 3, n2: 2, result: 6, yomi: ['さん', 'に', 'が', 'ろく'] }, { n1: 3, n2: 3, result: 9, yomi: ['さ', 'ざん', 'が', 'く'] }, { n1: 3, n2: 4, result: 12, yomi: ['さん', 'し', '', 'じゅうに'] }, { n1: 3, n2: 5, result: 15, yomi: ['さん', 'ご', '', 'じゅうご'] }, { n1: 3, n2: 6, result: 18, yomi: ['さぶ', 'ろく', '', 'じゅうはち'] }, { n1: 3, n2: 7, result: 21, yomi: ['さん', 'しち', '', 'にじゅういち'] }, { n1: 3, n2: 8, result: 24, yomi: ['さん', 'ぱ', '', 'にじゅうし'] }, { n1: 3, n2: 9, result: 27, yomi: ['さん', 'く', '', 'にじゅうしち'] }],
+            4: [{ n1: 4, n2: 1, result: 4, yomi: ['し', 'いち', 'が', 'し'] }, { n1: 4, n2: 2, result: 8, yomi: ['し', 'に', 'が', 'はち'] }, { n1: 4, n2: 3, result: 12, yomi: ['し', 'さん', '', 'じゅうに'] }, { n1: 4, n2: 4, result: 16, yomi: ['し', 'し', '', 'じゅうろく'] }, { n1: 4, n2: 5, result: 20, yomi: ['し', 'ご', '', 'にじゅう'] }, { n1: 4, n2: 6, result: 24, yomi: ['し', 'ろく', '', 'にじゅうし'] }, { n1: 4, n2: 7, result: 28, yomi: ['し', 'しち', '', 'にじゅうはち'] }, { n1: 4, n2: 8, result: 32, yomi: ['し', 'は', '', 'さんじゅうに'] }, { n1: 4, n2: 9, result: 36, yomi: ['し', 'く', '', 'さんじゅうろく'] }],
+            5: [{ n1: 5, n2: 1, result: 5, yomi: ['ご', 'いち', 'が', 'ご'] }, { n1: 5, n2: 2, result: 10, yomi: ['ご', 'に', '', 'じゅう'] }, { n1: 5, n2: 3, result: 15, yomi: ['ご', 'さん', '', 'じゅうご'] }, { n1: 5, n2: 4, result: 20, yomi: ['ご', 'し', '', 'にじゅう'] }, { n1: 5, n2: 5, result: 25, yomi: ['ご', 'ご', '', 'にじゅうご'] }, { n1: 5, n2: 6, result: 30, yomi: ['ご', 'ろく', '', 'さんじゅう'] }, { n1: 5, n2: 7, result: 35, yomi: ['ご', 'しち', '', 'さんじゅうご'] }, { n1: 5, n2: 8, result: 40, yomi: ['ご', 'は', '', 'しじゅう'] }, { n1: 5, n2: 9, result: 45, yomi: ['ごっ', 'く', '', 'しじゅうご'] }],
+            6: [{ n1: 6, n2: 1, result: 6, yomi: ['ろく', 'いち', 'が', 'ろく'] }, { n1: 6, n2: 2, result: 12, yomi: ['ろく', 'に', '', 'じゅうに'] }, { n1: 6, n2: 3, result: 18, yomi: ['ろく', 'さん', '', 'じゅうはち'] }, { n1: 6, n2: 4, result: 24, yomi: ['ろく', 'し', '', 'にじゅうし'] }, { n1: 6, n2: 5, result: 30, yomi: ['ろく', 'ご', '', 'さんじゅう'] }, { n1: 6, n2: 6, result: 36, yomi: ['ろく', 'ろく', '', 'さんじゅうろく'] }, { n1: 6, n2: 7, result: 42, yomi: ['ろく', 'しち', '', 'しじゅうに'] }, { n1: 6, n2: 8, result: 48, yomi: ['ろく', 'は', '', 'しじゅうはち'] }, { n1: 6, n2: 9, result: 54, yomi: ['ろっ', 'く', '', 'ごじゅうし'] }],
+            7: [{ n1: 7, n2: 1, result: 7, yomi: ['しち', 'いち', 'が', 'しち'] }, { n1: 7, n2: 2, result: 14, yomi: ['しち', 'に', '', 'じゅうし'] }, { n1: 7, n2: 3, result: 21, yomi: ['しち', 'さん', '', 'にじゅういち'] }, { n1: 7, n2: 4, result: 28, yomi: ['しち', 'し', '', 'にじゅうはち'] }, { n1: 7, n2: 5, result: 35, yomi: ['しち', 'ご', '', 'さんじゅうご'] }, { n1: 7, n2: 6, result: 42, yomi: ['しち', 'ろく', '', 'しじゅうに'] }, { n1: 7, n2: 7, result: 49, yomi: ['しち', 'しち', '', 'しじゅうく'] }, { n1: 7, n2: 8, result: 56, yomi: ['しち', 'は', '', 'ごじゅうろく'] }, { n1: 7, n2: 9, result: 63, yomi: ['しち', 'く', '', 'ろくじゅうさん'] }],
+            8: [{ n1: 8, n2: 1, result: 8, yomi: ['はち', 'いち', 'が', 'はち'] }, { n1: 8, n2: 2, result: 16, yomi: ['はち', 'に', '', 'じゅうろく'] }, { n1: 8, n2: 3, result: 24, yomi: ['はち', 'さん', '', 'にじゅうし'] }, { n1: 8, n2: 4, result: 32, yomi: ['はち', 'し', '', 'さんじゅうに'] }, { n1: 8, n2: 5, result: 40, yomi: ['はち', 'ご', '', 'しじゅう'] }, { n1: 8, n2: 6, result: 48, yomi: ['はち', 'ろく', '', 'しじゅうはち'] }, { n1: 8, n2: 7, result: 56, yomi: ['はち', 'しち', '', 'ごじゅうろく'] }, { n1: 8, n2: 8, result: 64, yomi: ['はっ', 'ぱ', '', 'ろくじゅうし'] }, { n1: 8, n2: 9, result: 72, yomi: ['はっ', 'く', '', 'しちじゅうに'] }],
+            9: [{ n1: 9, n2: 1, result: 9, yomi: ['く', 'いち', 'が', 'く'] }, { n1: 9, n2: 2, result: 18, yomi: ['く', 'に', '', 'じゅうはち'] }, { n1: 9, n2: 3, result: 27, yomi: ['く', 'さん', '', 'にじゅうしち'] }, { n1: 9, n2: 4, result: 36, yomi: ['く', 'し', '', 'さんじゅうろく'] }, { n1: 9, n2: 5, result: 45, yomi: ['く', 'ご', '', 'しじゅうご'] }, { n1: 9, n2: 6, result: 54, yomi: ['く', 'ろく', '', 'ごじゅうし'] }, { n1: 9, n2: 7, result: 63, yomi: ['く', 'しち', '', 'ろくじゅうさん'] }, { n1: 9, n2: 8, result: 72, yomi: ['く', 'は', '', 'しちじゅうに'] }, { n1: 9, n2: 9, result: 81, yomi: ['く', 'く', '', 'はちじゅういち'] }]
+        };
+
+        const selectionScreen = document.getElementById('selection-screen');
+        const doorScreen = document.getElementById('door-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        
+        const mainModeBtns = document.querySelectorAll('#main-mode-group .select-btn-wide');
+        const orderBtns = document.querySelectorAll('.sub-opt-order');
+        const akiBtns = document.querySelectorAll('.sub-opt-aki');
+        const danSelectButtons = document.querySelectorAll('.dan-select-btn');
+        const allDanBtn = document.getElementById('all-dan-btn');
+        const goToDoorBtn = document.getElementById('go-to-door-btn');
+        
+        const questionSliders = document.querySelectorAll('.question-count-slider');
+        const questionValTexts = document.querySelectorAll('.question-count-val');
+        const speedSliders = document.querySelectorAll('.speed-slider');
+        const speedValTexts = document.querySelectorAll('.speed-val');
+
+        const doorDansText = document.getElementById('door-dans-text');
+        const doorModeText = document.getElementById('door-mode-text');
+        const doorSubText = document.getElementById('door-sub-text');
+        const doorDotsText = document.getElementById('door-dots-text');
+        const doorStartAutoBtn = document.getElementById('door-start-auto-btn');
+        const doorStartManualBtn = document.getElementById('door-start-manual-btn');
+
+        const displayArea = document.getElementById('display-area');
+        const progressBadge = document.getElementById('progress-badge');
+        
+        const toggleYomiganaBtns = document.querySelectorAll('.toggle-yomigana-btn');
+        const toggleAnimationBtns = document.querySelectorAll('.toggle-animation-btn');
+        const doorBackBtns = document.querySelectorAll('.door-back-btn');
+
+        // State Variables
+        let currentMode = 'tonae';
+        let currentSubOption = 'nobori';
+        let selectedDans = [];
+        let targetQuestionCount = 9;
+        let speedSetting = 0; // -2 〜 +2
+        let multiplicationData = [];
+
+        let currentIndex = 0;
+        let isAnswerVisible = false;
+        let isYomiganaVisible = false;
+        let isAnimationEnabled = false;
+        let isAnimating = false;
+        let isAutoPlaying = false;
+        let autoAdvanceTimer = null;
+        let doorCountdownTimer = null;
+
+        // 1桁は全角、2桁は半角数字に変換する関数
+        function formatNum(num) {
+            const n = Number(num);
+            if (n >= 0 && n <= 9) {
+                return String(n).replace(/[0-9]/g, function(s) {
+                    return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
+                });
+            }
+            return String(n);
+        }
+
+        // 扉ページなどの表示用全角変換
+        function toFullWidthNum(num) {
+            return String(num).replace(/[0-9]/g, function(s) {
+                return String.fromCharCode(s.charCodeAt(0) + 0xFEE0);
+            });
+        }
+
+        function updateStartButtonState() {
+            goToDoorBtn.disabled = selectedDans.length === 0;
+            updateAutoQuestionCount();
+        }
+
+        // 段数に応じて問題数スライダーを自動更新（選んだ段数 × 9）
+        function updateAutoQuestionCount() {
+            const count = selectedDans.length === 0 ? 9 : selectedDans.length * 9;
+            targetQuestionCount = count;
+            questionSliders.forEach(s => s.value = count);
+            questionValTexts.forEach(t => t.textContent = count);
+        }
+
+        // モード選択
+        mainModeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                mainModeBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                currentMode = btn.dataset.mode;
+
+                if (currentMode === 'aki') {
+                    orderBtns.forEach(b => { b.classList.add('disabled'); b.classList.remove('selected'); });
+                    akiBtns.forEach(b => b.classList.remove('disabled'));
+                    if (!Array.from(akiBtns).some(b => b.classList.contains('selected'))) {
+                        akiBtns[0].classList.add('selected');
+                        currentSubOption = akiBtns[0].dataset.sub;
+                    }
+                } else {
+                    akiBtns.forEach(b => { b.classList.add('disabled'); b.classList.remove('selected'); });
+                    orderBtns.forEach(b => b.classList.remove('disabled'));
+                    if (!Array.from(orderBtns).some(b => b.classList.contains('selected'))) {
+                        orderBtns[0].classList.add('selected');
+                        currentSubOption = orderBtns[0].dataset.sub;
+                    }
+                }
+            });
+        });
+
+        orderBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains('disabled')) return;
+                orderBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                currentSubOption = btn.dataset.sub;
+            });
+        });
+
+        akiBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains('disabled')) return;
+                akiBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                currentSubOption = btn.dataset.sub;
+            });
+        });
+
+        danSelectButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const dan = parseInt(btn.dataset.dan);
+                if (btn.classList.contains('selected')) {
+                    btn.classList.remove('selected');
+                    selectedDans = selectedDans.filter(d => d !== dan);
+                    allDanBtn.classList.remove('selected');
+                } else {
+                    btn.classList.add('selected');
+                    selectedDans.push(dan);
+                    if (selectedDans.length === 9) {
+                        allDanBtn.classList.add('selected');
+                    }
+                }
+                updateStartButtonState();
+            });
+        });
+
+        allDanBtn.addEventListener('click', () => {
+            if (allDanBtn.classList.contains('selected')) {
+                allDanBtn.classList.remove('selected');
+                danSelectButtons.forEach(b => b.classList.remove('selected'));
+                selectedDans = [];
+            } else {
+                allDanBtn.classList.add('selected');
+                danSelectButtons.forEach(b => b.classList.add('selected'));
+                selectedDans = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            }
+            updateStartButtonState();
+        });
+
+        // メーターの完全同期（トップページと練習ページ）
+        questionSliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                targetQuestionCount = val;
+                questionSliders.forEach(s => s.value = val);
+                questionValTexts.forEach(t => t.textContent = val);
+            });
+        });
+
+        speedSliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                speedSetting = val;
+                speedSliders.forEach(s => s.value = val);
+                speedValTexts.forEach(t => t.textContent = val > 0 ? `+${val}` : val);
+            });
+        });
+
+        // 共通トグルUI更新（改行形式「アニメー<br>ション<br>ON / OFF」に準拠）
+        function updateToggleButtonsUI() {
+            toggleYomiganaBtns.forEach(btn => {
+                btn.innerHTML = isYomiganaVisible ? 'よみかた<br>をけす' : 'よみかた<br>をだす';
+            });
+            toggleAnimationBtns.forEach(btn => {
+                btn.innerHTML = isAnimationEnabled ? 'アニメー<br>ション<br>ON' : 'アニメー<br>ション<br>OFF';
+            });
+        }
+
+        toggleYomiganaBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isYomiganaVisible = !isYomiganaVisible;
+                updateToggleButtonsUI();
+                if (!quizScreen.classList.contains('hidden')) {
+                    render();
+                }
+            });
+        });
+
+        toggleAnimationBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                isAnimationEnabled = !isAnimationEnabled;
+                updateToggleButtonsUI();
+                if (!quizScreen.classList.contains('hidden')) {
+                    render();
+                }
+            });
+        });
+
+        doorBackBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearTimeout(doorCountdownTimer);
+                stopAutoPlay();
+                doorScreen.classList.add('hidden');
+                quizScreen.classList.add('hidden');
+                selectionScreen.classList.remove('hidden');
+            });
+        });
+
+        // 練習ページの「やめる」ボタンで扉ページへ戻る
+        const quizStopBtn = document.getElementById('quiz-stop-btn');
+        if (quizStopBtn) {
+            quizStopBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                returnToDoorScreen();
+            });
+        }
+
+        goToDoorBtn.addEventListener('click', showDoorScreen);
+
+        function showDoorScreen() {
+            selectionScreen.classList.add('hidden');
+            doorScreen.classList.remove('hidden');
+
+            let dansTitle = '';
+            if (selectedDans.length === 9) {
+                dansTitle = 'すべての だん';
+            } else {
+                const sorted = [...selectedDans].sort((a, b) => a - b);
+                dansTitle = sorted.map(d => `${toFullWidthNum(d)}`).join('・') + 'の だん';
+            }
+            doorDansText.textContent = dansTitle;
+
+            let modeTitle = '';
+            if (currentMode === 'tonae') modeTitle = 'となえ九九';
+            else if (currentMode === 'hatena') modeTitle = 'はてな九九';
+            else if (currentMode === 'aki') modeTitle = 'あなあき九九';
+            doorModeText.textContent = modeTitle;
+
+            let subTitle = '';
+            if (currentMode === 'aki') {
+                subTitle = (currentSubOption === 'front') ? '□×■＝■' : '■×□＝■';
+            } else {
+                if (currentSubOption === 'nobori') subTitle = '上り';
+                else if (currentSubOption === 'kudari') subTitle = '下り';
+                else if (currentSubOption === 'random') subTitle = 'ランダム';
+            }
+            doorSubText.textContent = subTitle;
+
+            doorDotsText.innerHTML = '&nbsp;';
+            doorStartAutoBtn.disabled = false;
+            doorStartManualBtn.disabled = false;
+        }
+
+        // 扉ページカウントダウン (メトロノーム BPM 70 = 857.14ms)
+        function playBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz ピッ音
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.12);
+            } catch (e) {}
+        }
+
+        doorStartAutoBtn.addEventListener('click', () => {
+            doorStartAutoBtn.disabled = true;
+            doorStartManualBtn.disabled = true;
+            setupQuestions();
+
+            let dotCount = 0;
+            doorDotsText.textContent = '';
+
+            const bpm70Interval = 60000 / 70; // 約 857.14ms (メトロノーム70)
+
+            function stepDot() {
+                dotCount++;
+                doorDotsText.textContent = '・'.repeat(dotCount);
+                playBeep();
+
+                if (dotCount < 3) {
+                    doorCountdownTimer = setTimeout(stepDot, bpm70Interval);
+                } else {
+                    doorCountdownTimer = setTimeout(() => {
+                        doorScreen.classList.add('hidden');
+                        quizScreen.classList.remove('hidden');
+                        quizScreen.focus();
+                        render();
+                        startAutoPlay();
+                    }, bpm70Interval);
+                }
+            }
+
+            stepDot();
+        });
+
+        doorStartManualBtn.addEventListener('click', () => {
+            isAutoPlaying = false;
+            setupQuestions();
+            doorScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            quizScreen.focus();
+            render();
+        });
+
+        // 練習問題データ構築
+        function setupQuestions() {
+            let pool = [];
+            selectedDans.forEach(dan => {
+                if (allMultiplicationData[dan]) {
+                    pool = pool.concat(allMultiplicationData[dan]);
+                }
+            });
+
+            if (pool.length === 0) return;
+
+            // 要求された問題数（targetQuestionCount）を満たすまで繰り返しプールを拡張
+            let expandedPool = [];
+
+            if (currentMode === 'aki' || currentSubOption === 'random') {
+                while (expandedPool.length < targetQuestionCount) {
+                    let currentBatch = [...pool];
+                    for (let i = currentBatch.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [currentBatch[i], currentBatch[j]] = [currentBatch[j], currentBatch[i]];
+                    }
+                    expandedPool = expandedPool.concat(currentBatch);
+                }
+            } else if (currentSubOption === 'nobori') {
+                pool.sort((a, b) => (a.n1 - b.n1) || (a.n2 - b.n2));
+                while (expandedPool.length < targetQuestionCount) {
+                    expandedPool = expandedPool.concat(pool);
+                }
+            } else if (currentSubOption === 'kudari') {
+                pool.sort((a, b) => (b.n1 - a.n1) || (b.n2 - a.n2));
+                while (expandedPool.length < targetQuestionCount) {
+                    expandedPool = expandedPool.concat(pool);
+                }
+            }
+
+            multiplicationData = expandedPool.slice(0, targetQuestionCount);
+
+            currentIndex = 0;
+            isAnswerVisible = (currentMode === 'tonae');
+        }
+
+        function startAutoPlay() {
+            isAutoPlaying = true;
+            resetAutoAdvanceTimer();
+        }
+
+        function stopAutoPlay() {
+            isAutoPlaying = false;
+            clearTimeout(autoAdvanceTimer);
+        }
+
+        // 自動送り速度の計算（-8 〜 +2 に対応）
+        function resetAutoAdvanceTimer() {
+            clearTimeout(autoAdvanceTimer);
+            if (!isAutoPlaying) return;
+
+            let delay;
+            if (currentMode !== 'tonae' && !isAnswerVisible) {
+                // 答えが出されるまでの時間（問題提示中）: -8〜+2で変化
+                let baseDelay = 1500;
+                let speedOffset = speedSetting * 300;
+                delay = Math.max(400, baseDelay - speedOffset);
+            } else {
+                // 答えが出たあと次の問題へ移るまでの時間: -3〜-8は-3のときの時間で固定
+                let effectiveSpeed = (speedSetting < -3) ? -3 : speedSetting;
+                let baseDelay = 2000;
+                let speedOffset = effectiveSpeed * 300;
+                delay = Math.max(400, baseDelay - speedOffset);
+            }
+
+            autoAdvanceTimer = setTimeout(() => {
+                handleManualStep();
+            }, delay);
+        }
+
+        function handleManualStep() {
+            if (isAnimating) return;
+
+            // となえ九九以外で、答えがまだ隠れている場合はまず答えをオープン
+            if (currentMode !== 'tonae' && !isAnswerVisible) {
+                isAnswerVisible = true;
+                renderAnswerOnly();
+                if (isAutoPlaying) {
+                    resetAutoAdvanceTimer();
+                }
+                return;
+            }
+
+            // 次の問題へ遷移
+            if (currentIndex < multiplicationData.length - 1) {
+                if (isAnimationEnabled) {
+                    animateToNext();
+                } else {
+                    currentIndex++;
+                    isAnswerVisible = (currentMode === 'tonae');
+                    render();
+                    if (isAutoPlaying) resetAutoAdvanceTimer();
+                }
+            } else {
+                // 全問終了 -> 扉ページに戻る
+                returnToDoorScreen();
+            }
+        }
+
+        function returnToDoorScreen() {
+            stopAutoPlay();
+            quizScreen.classList.add('hidden');
+            showDoorScreen();
+        }
+
+        function animateToNext() {
+            isAnimating = true;
+            const currentEl = displayArea.querySelector('.multiplication-item.current');
+            
+            if (currentEl) {
+                currentEl.classList.add('roll-out-up');
+            }
+
+            setTimeout(() => {
+                currentIndex++;
+                isAnswerVisible = (currentMode === 'tonae');
+                render();
+                isAnimating = false;
+                if (isAutoPlaying) resetAutoAdvanceTimer();
+            }, 380);
+        }
+
+        function renderAnswerOnly() {
+            const covers = displayArea.querySelectorAll('.answer-cover, .yomi-answer-cover');
+            covers.forEach(c => c.classList.add('hidden'));
+        }
+
+        function render() {
+            displayArea.innerHTML = '';
+            if (multiplicationData.length === 0) return;
+
+            progressBadge.textContent = `${currentIndex + 1} / ${multiplicationData.length}`;
+
+            const itemData = multiplicationData[currentIndex];
+            const itemEl = document.createElement('div');
+            itemEl.className = 'multiplication-item current';
+
+            // 1. 読み方レンダリング
+            const yomiEl = document.createElement('div');
+            yomiEl.className = `yomigana ${isYomiganaVisible ? '' : 'hidden'}`;
+
+            let yomiParts = [...itemData.yomi];
+            let rawHtmlYomi = '';
+
+            if (currentMode === 'tonae') {
+                rawHtmlYomi = yomiParts.join(' ');
+            } else if (currentMode === 'hatena') {
+                rawHtmlYomi = `${yomiParts[0]} ${yomiParts[1]} ${yomiParts[2]} <span class="yomi-answer-box">${yomiParts[3]}<span class="yomi-answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span>`;
+            } else if (currentMode === 'aki') {
+                if (currentSubOption === 'front') {
+                    rawHtmlYomi = `<span class="yomi-answer-box">${yomiParts[0]} ${yomiParts[1]}<span class="yomi-answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span> ${yomiParts[2]} ${yomiParts[3]}`;
+                } else {
+                    rawHtmlYomi = `${yomiParts[0]} <span class="yomi-answer-box">${yomiParts[1]}<span class="yomi-answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span> ${yomiParts[2]} ${yomiParts[3]}`;
+                }
+            }
+            yomiEl.innerHTML = rawHtmlYomi;
+            itemEl.appendChild(yomiEl);
+
+            // 2. 数式（九九の式）レンダリング
+            const formulaEl = document.createElement('div');
+            formulaEl.className = 'formula';
+
+            // 1桁は全角、2桁は半角に変換
+            const n1Str = formatNum(itemData.n1);
+            const n2Str = formatNum(itemData.n2);
+            const resStr = formatNum(itemData.result);
+
+            let formulaHtml = '';
+
+            if (currentMode === 'tonae') {
+                formulaHtml = `${n1Str}×${n2Str}＝${resStr}`;
+            } else if (currentMode === 'hatena') {
+                formulaHtml = `${n1Str}×${n2Str}＝<span class="answer-box">${resStr}<span class="answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span>`;
+            } else if (currentMode === 'aki') {
+                if (currentSubOption === 'front') {
+                    formulaHtml = `<span class="answer-box">${n1Str}<span class="answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span>×${n2Str}＝${resStr}`;
+                } else {
+                    formulaHtml = `${n1Str}×<span class="answer-box">${n2Str}<span class="answer-cover ${isAnswerVisible ? 'hidden' : ''}"></span></span>＝${resStr}`;
+                }
+            }
+
+            formulaEl.innerHTML = formulaHtml;
+            itemEl.appendChild(formulaEl);
+
+            displayArea.appendChild(itemEl);
+        }
+
+        quizScreen.addEventListener('click', (e) => {
+            if (e.target.closest('.top-button-container') || e.target.closest('.settings-meter-container')) {
+                return;
+            }
+            handleManualStep();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (!doorScreen.classList.contains('hidden')) {
+                if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Space') {
+                    e.preventDefault();
+                    if (!doorStartManualBtn.disabled) {
+                        doorStartManualBtn.click();
+                    }
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    clearTimeout(doorCountdownTimer);
+                    stopAutoPlay();
+                    doorScreen.classList.add('hidden');
+                    quizScreen.classList.add('hidden');
+                    selectionScreen.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (quizScreen.classList.contains('hidden')) return;
+            if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
+                e.preventDefault();
+                handleManualStep();
+            }
+        });
+
+        // 初期表示設定
+        updateStartButtonState();
+        updateToggleButtonsUI();
+    </script>
+</body>
+</html>
